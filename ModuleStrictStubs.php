@@ -488,6 +488,11 @@ class IPSModuleStrict
         return true;
     }
 
+    protected function UnregisterHook(string $HookPath): bool
+    {
+        return true;
+    }
+
     protected function RegisterOAuth(string $OAuthPath): bool
     {
         return true;
