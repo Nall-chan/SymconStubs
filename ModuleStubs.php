@@ -672,7 +672,7 @@ class IPSModule
             if ($instanceID == 0) {
                 break;
             }
-            if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] != IS_ACTIVE) {
+            if (IPS_GetInstance($instanceID)['InstanceStatus'] != IS_ACTIVE) {
                 return false;
             }
             $instanceID = IPS_GetInstance($instanceID)['ConnectionID'];
