@@ -5,6 +5,21 @@ include_once __DIR__ . '/ModuleStubs.php';
 
 class IPSModulePublic extends IPSModule
 {
+    private $getTimeCallback = null;
+
+    public function setGetTimeCallback(callable $callback): void
+    {
+        $this->getTimeCallback = $callback;
+    }
+
+    protected function getTime(): int
+    {
+        if ($this->getTimeCallback !== null) {
+            return ($this->getTimeCallback)();
+        }
+        throw new Exception('getTime needs to be implemented by module under test');
+    }
+
     public function __call($name, $arguments)
     {
         if (!in_array($name, get_class_methods($this))) {
@@ -23,6 +38,9 @@ class IPSModuleStrict
     public function __construct(int $InstanceID)
     {
         $this->module = new IPSModulePublic($InstanceID);
+        $this->module->setGetTimeCallback(function(): int {
+            return $this->getTime();
+        });
         $this->InstanceID = $InstanceID;
     }
 
@@ -498,6 +516,6 @@ class IPSModuleStrict
 
     protected function getTime(): int
     {
-        return $this->module->getTime();
+        throw new Exception('getTime needs to be implemented by module under test');
     }
 }

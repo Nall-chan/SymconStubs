@@ -57,28 +57,31 @@ function SetValue(int $VariableID, $Value)
         default:
             throw new Exception('Unsupported VariableType!');
     }
-
     return true;
 }
 
 function SetValueBoolean(int $VariableID, bool $Value)
 {
     IPS\VariableManager::writeVariableBoolean($VariableID, $Value);
+    return true;
 }
 
 function SetValueInteger(int $VariableID, int $Value)
 {
     IPS\VariableManager::writeVariableInteger($VariableID, $Value);
+    return true;
 }
 
 function SetValueFloat(int $VariableID, float $Value)
 {
     IPS\VariableManager::writeVariableFloat($VariableID, $Value);
+    return true;
 }
 
 function SetValueString(int $VariableID, string $Value)
 {
     IPS\VariableManager::writeVariableString($VariableID, $Value);
+    return true;
 }
 
 function GetValueFormatted(int $VariableID)
