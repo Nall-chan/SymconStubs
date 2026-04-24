@@ -7,6 +7,14 @@ class IPSModulePublic extends IPSModule
 {
     private $getTimeCallback = null;
 
+    public function __call($name, $arguments)
+    {
+        if (!in_array($name, get_class_methods($this))) {
+            throw "Method $name is not implemented";
+        }
+        return $this->{$name}(...$arguments);
+    }
+
     public function setGetTimeCallback(callable $callback): void
     {
         $this->getTimeCallback = $callback;
@@ -19,14 +27,6 @@ class IPSModulePublic extends IPSModule
         }
         throw new Exception('getTime needs to be implemented by module under test');
     }
-
-    public function __call($name, $arguments)
-    {
-        if (!in_array($name, get_class_methods($this))) {
-            throw "Method $name is not implemented";
-        }
-        return $this->{$name}(...$arguments);
-    }
 }
 
 class IPSModuleStrict
@@ -38,7 +38,8 @@ class IPSModuleStrict
     public function __construct(int $InstanceID)
     {
         $this->module = new IPSModulePublic($InstanceID);
-        $this->module->setGetTimeCallback(function(): int {
+        $this->module->setGetTimeCallback(function (): int
+        {
             return $this->getTime();
         });
         $this->InstanceID = $InstanceID;
@@ -144,7 +145,7 @@ class IPSModuleStrict
         return $this->module->GetReferenceList();
     }
 
-    public function getMessages() : array
+    public function getMessages(): array
     {
         return $this->module->getMessages();
     }
