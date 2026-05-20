@@ -5,12 +5,27 @@ include_once __DIR__ . '/ModuleStubs.php';
 
 class IPSModulePublic extends IPSModule
 {
+    private $getTimeCallback = null;
+
     public function __call($name, $arguments)
     {
         if (!in_array($name, get_class_methods($this))) {
             throw new Exception("Method $name is not implemented");
         }
         return $this->{$name}(...$arguments);
+    }
+
+    public function setGetTimeCallback(callable $callback): void
+    {
+        $this->getTimeCallback = $callback;
+    }
+
+    protected function getTime(): int
+    {
+        if ($this->getTimeCallback !== null) {
+            return ($this->getTimeCallback)();
+        }
+        throw new Exception('getTime needs to be implemented by module under test');
     }
 }
 
@@ -23,6 +38,10 @@ class IPSModuleStrict
     public function __construct(int $InstanceID)
     {
         $this->module = new IPSModulePublic($InstanceID);
+        $this->module->setGetTimeCallback(function (): int
+        {
+            return $this->getTime();
+        });
         $this->InstanceID = $InstanceID;
     }
 
@@ -126,12 +145,17 @@ class IPSModuleStrict
         return $this->module->GetReferenceList();
     }
 
+    public function getMessages(): array
+    {
+        return $this->module->getMessages();
+    }
+
     public function SetVisualizationType(int $Type): void
     {
         $this->module->SetVisualizationType($Type);
     }
 
-    protected function GetIDForIdent(string $Ident): int
+    protected function GetIDForIdent(string $Ident): int|false
     {
         return $this->module->GetIDForIdent($Ident);
     }
@@ -192,19 +216,19 @@ class IPSModuleStrict
 
     protected function RegisterTimer(string $Ident, int $Milliseconds, string $ScriptText): bool
     {
-        $this->module->RegisterTimer($Ident, $Milliseconds, $ScriptText);
+        $this->module->RegisterTimer($Ident, $Milliseconds, $ScriptText, $this->getTime());
         return true;
     }
 
     protected function SetTimerInterval(string $Ident, int $Milliseconds): bool
     {
-        $this->module->SetTimerInterval($Ident, $Milliseconds);
+        $this->module->SetTimerInterval($Ident, $Milliseconds, $this->getTime());
         return true;
     }
 
     protected function GetTimerInterval(string $Ident): int
     {
-        return $this->module->GetTimerInterval($Ident);
+        return $this->module->GetTimerInterval($Ident, $this->getTime());
     }
 
     protected function RegisterScript(string $Ident, string $Name, string $Content = '', int $Position = 0): bool
@@ -223,21 +247,21 @@ class IPSModuleStrict
 
     protected function RegisterVariableInteger(string $Ident, string $Name, string|array $ProfileOrPresentation = '', int $Position = 0): bool
     {
-        $variableExists = (@$this->module->GetIDForIdent($Ident) !== null);
+        $variableExists = (@$this->module->GetIDForIdent($Ident) !== false);
         $this->module->RegisterVariableInteger($Ident, $Name, $ProfileOrPresentation, $Position);
         return !$variableExists;
     }
 
     protected function RegisterVariableFloat(string $Ident, string $Name, string|array $ProfileOrPresentation = '', int $Position = 0): bool
     {
-        $variableExists = (@$this->module->GetIDForIdent($Ident) !== null);
+        $variableExists = (@$this->module->GetIDForIdent($Ident) !== false);
         $this->module->RegisterVariableFloat($Ident, $Name, $ProfileOrPresentation, $Position);
         return !$variableExists;
     }
 
     protected function RegisterVariableString(string $Ident, string $Name, string|array $ProfileOrPresentation = '', int $Position = 0): bool
     {
-        $variableExists = (@$this->module->GetIDForIdent($Ident) !== null);
+        $variableExists = (@$this->module->GetIDForIdent($Ident) !== false);
         $this->module->RegisterVariableString($Ident, $Name, $ProfileOrPresentation, $Position);
         return !$variableExists;
     }
@@ -500,6 +524,6 @@ class IPSModuleStrict
 
     protected function getTime(): int
     {
-        return $this->module->getTime();
+        throw new Exception('getTime needs to be implemented by module under test');
     }
 }

@@ -226,30 +226,30 @@ class IPSModule
         IPS_RunScriptTextEx($ScriptText, ['TARGET' => $this->InstanceID]);
     }
 
-    protected function RegisterTimer(string $Ident, int $Milliseconds, string $ScriptText)
+    protected function RegisterTimer(string $Ident, int $Milliseconds, string $ScriptText, ?int $start = null)
     {
         $this->timers[$Ident] = [
             'millis' => $Milliseconds,
-            'start'  => $this->getTime()
+            'start'  => $start ?? $this->getTime()
         ];
     }
 
-    protected function SetTimerInterval(string $Ident, int $Milliseconds)
+    protected function SetTimerInterval(string $Ident, int $Milliseconds, ?int $start = null)
     {
         if (!isset($this->timers[$Ident])) {
             throw new Exception('Timer is not registered');
         }
 
-        $this->RegisterTimer($Ident, $Milliseconds, '');
+        $this->RegisterTimer($Ident, $Milliseconds, '', $start);
     }
 
-    protected function GetTimerInterval(string $Ident)
+    protected function GetTimerInterval(string $Ident, ?int $currentTime = null)
     {
         if (!isset($this->timers[$Ident])) {
             throw new Exception('Timer is not registered');
         }
 
-        return $this->timers[$Ident]['millis'] - ($this->getTime() - $this->timers[$Ident]['start']) * 1000;
+        return $this->timers[$Ident]['millis'] - (($currentTime ?? $this->getTime()) - $this->timers[$Ident]['start']) * 1000;
     }
 
     protected function RegisterScript($Ident, $Name, $Content = '', $Position = 0)
@@ -672,7 +672,7 @@ class IPSModule
             if ($instanceID == 0) {
                 break;
             }
-            if (IPS_GetInstance($this->InstanceID)['InstanceStatus'] != IS_ACTIVE) {
+            if (IPS_GetInstance($instanceID)['InstanceStatus'] != IS_ACTIVE) {
                 return false;
             }
             $instanceID = IPS_GetInstance($instanceID)['ConnectionID'];
@@ -716,7 +716,7 @@ class IPSModule
 
     private function RegisterVariable($Ident, $Name, $Type, $ProfileOrPresentation, $Position)
     {
-        if ($ProfileOrPresentation !== '') {
+        if (is_string($ProfileOrPresentation) && ($ProfileOrPresentation !== '')) {
             //prefer system profiles
             if ($ProfileOrPresentation[0] != '~') {
                 if (IPS_VariableProfileExists('~' . $ProfileOrPresentation)) {
