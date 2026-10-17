@@ -41,45 +41,37 @@ function GetValueString(int $VariableID)
 
 function SetValue(int $VariableID, $Value)
 {
-    switch (IPS\VariableManager::getVariable($VariableID)['VariableType']) {
-        case 0: /* Boolean */
-            IPS\VariableManager::writeVariableBoolean($VariableID, $Value);
-            break;
-        case 1: /* Integer */
-            IPS\VariableManager::writeVariableInteger($VariableID, $Value);
-            break;
-        case 2: /* Float */
-            IPS\VariableManager::writeVariableFloat($VariableID, $Value);
-            break;
-        case 3: /* String */
-            IPS\VariableManager::writeVariableString($VariableID, $Value);
-            break;
-        default:
-            throw new Exception('Unsupported VariableType!');
-    }
+    //The value is converted to the type of the variable like the kernel does
+    $Value = IPS\ValueConverter::toVariableType($Value, IPS\VariableManager::getVariable($VariableID)['VariableType']);
+    IPS\VariableManager::checkNotReadOnly($VariableID);
+    IPS\VariableManager::writeVariable($VariableID, $Value);
     return true;
 }
 
 function SetValueBoolean(int $VariableID, bool $Value)
 {
+    IPS\VariableManager::checkNotReadOnly($VariableID);
     IPS\VariableManager::writeVariableBoolean($VariableID, $Value);
     return true;
 }
 
 function SetValueInteger(int $VariableID, int $Value)
 {
+    IPS\VariableManager::checkNotReadOnly($VariableID);
     IPS\VariableManager::writeVariableInteger($VariableID, $Value);
     return true;
 }
 
 function SetValueFloat(int $VariableID, float $Value)
 {
+    IPS\VariableManager::checkNotReadOnly($VariableID);
     IPS\VariableManager::writeVariableFloat($VariableID, $Value);
     return true;
 }
 
 function SetValueString(int $VariableID, string $Value)
 {
+    IPS\VariableManager::checkNotReadOnly($VariableID);
     IPS\VariableManager::writeVariableString($VariableID, $Value);
     return true;
 }
@@ -287,41 +279,49 @@ function RequestActionEx(int $VariableID, $Value, $Sender)
 function IPS_SetParent(int $ID, int $ParentID)
 {
     IPS\ObjectManager::setParent($ID, $ParentID);
+    return true;
 }
 
 function IPS_SetIdent(int $ID, string $Ident)
 {
     IPS\ObjectManager::setIdent($ID, $Ident);
+    return true;
 }
 
 function IPS_SetName(int $ID, string $Name)
 {
     IPS\ObjectManager::setName($ID, $Name);
+    return true;
 }
 
 function IPS_SetInfo(int $ID, string $Info)
 {
     IPS\ObjectManager::setInfo($ID, $Info);
+    return true;
 }
 
 function IPS_SetIcon(int $ID, string $Icon)
 {
     IPS\ObjectManager::setIcon($ID, $Icon);
+    return true;
 }
 
 function IPS_SetPosition(int $ID, int $Position)
 {
     IPS\ObjectManager::setPosition($ID, $Position);
+    return true;
 }
 
 function IPS_SetHidden(int $ID, bool $Hidden)
 {
     IPS\ObjectManager::setHidden($ID, $Hidden);
+    return true;
 }
 
 function IPS_SetDisabled(int $ID, bool $Disabled)
 {
     IPS\ObjectManager::setDisabled($ID, $Disabled);
+    return true;
 }
 
 function IPS_ObjectExists(int $ID)
@@ -390,8 +390,10 @@ function IPS_CreateCategory()
 
 function IPS_DeleteCategory(int $CategoryID)
 {
+    IPS\ObjectManager::checkNoChildren($CategoryID, 'category');
     IPS\CategoryManager::deleteCategory($CategoryID);
     IPS\ObjectManager::unregisterObject($CategoryID);
+    return true;
 }
 
 function IPS_CategoryExists(int $CategoryID)
@@ -426,8 +428,10 @@ function IPS_CreateInstance(string $ModuleID)
 
 function IPS_DeleteInstance(int $InstanceID)
 {
+    IPS\ObjectManager::checkNoChildren($InstanceID, 'instance');
     IPS\InstanceManager::deleteInstance($InstanceID);
     IPS\ObjectManager::unregisterObject($InstanceID);
+    return true;
 }
 
 function IPS_InstanceExists(int $InstanceID)
@@ -474,11 +478,13 @@ function IPS_HasChanges(int $InstanceID)
 function IPS_ResetChanges(int $InstanceID)
 {
     IPS\InstanceManager::getInstanceInterface($InstanceID)->ResetChanges();
+    return true;
 }
 
 function IPS_ApplyChanges(int $InstanceID)
 {
     IPS\InstanceManager::getInstanceInterface($InstanceID)->ApplyChanges();
+    return true;
 }
 
 function IPS_GetProperty(int $InstanceID, string $Name)
@@ -504,22 +510,26 @@ function IPS_GetConfigurationForm(int $InstanceID)
 function IPS_SetProperty(int $InstanceID, string $Name, $Value)
 {
     IPS\InstanceManager::getInstanceInterface($InstanceID)->SetProperty($Name, $Value);
+    return true;
 }
 
 function IPS_SetConfiguration(int $InstanceID, string $Configuration)
 {
     IPS\InstanceManager::getInstanceInterface($InstanceID)->SetConfiguration($Configuration);
+    return true;
 }
 
 /* Instance Manager - Connections */
 function IPS_ConnectInstance(int $InstanceID, int $ParentID)
 {
     IPS\InstanceManager::connectInstance($InstanceID, $ParentID);
+    return true;
 }
 
 function IPS_DisconnectInstance(int $InstanceID)
 {
     IPS\InstanceManager::disconnectInstance($InstanceID);
+    return true;
 }
 
 /* Instance Manager - Searching */
@@ -547,27 +557,32 @@ function IPS_IsSearching(int $InstanceID)
 function IPS_DisableDebug(int $ID)
 {
     IPS\DebugServer::disableDebug($ID);
+    return true;
 }
 
 function IPS_EnableDebug(int $ID, int $Duration)
 {
     IPS\DebugServer::enableDebug($ID, $Duration);
+    return true;
 }
 
 function IPS_SendDebug(int $SenderID, string $Message, string $Data, int $Format)
 {
     IPS\DebugServer::sendDebug($SenderID, $Message, $Data, $Format);
+    return true;
 }
 
 /* Instance Manager - Actions */
 function IPS_RequestAction(int $InstanceID, string $VariableIdent, $Value)
 {
-    return IPS\InstanceManager::getInstanceInterface($InstanceID)->RequestAction($VariableIdent, $Value);
+    IPS\InstanceManager::getInstanceInterface($InstanceID)->RequestAction($VariableIdent, $Value);
+    return true;
 }
 
 /* Variable Manager */
 function IPS_CreateVariable(int $VariableType)
 {
+    IPS\VariableManager::checkVariableTypeRange($VariableType);
     $id = IPS\ObjectManager::registerObject(2 /* Variable */);
     IPS\VariableManager::createVariable($id, $VariableType);
 
@@ -576,8 +591,10 @@ function IPS_CreateVariable(int $VariableType)
 
 function IPS_DeleteVariable(int $VariableID)
 {
+    IPS\ObjectManager::checkNoChildren($VariableID, 'variable');
     IPS\VariableManager::deleteVariable($VariableID);
     IPS\ObjectManager::unregisterObject($VariableID);
+    return true;
 }
 
 function IPS_VariableExists(int $VariableID)
@@ -616,21 +633,25 @@ function IPS_GetVariableList()
 function IPS_SetVariableCustomAction(int $VariableID, int $ScriptID)
 {
     IPS\VariableManager::setVariableCustomAction($VariableID, $ScriptID);
+    return true;
 }
 
 function IPS_SetVariableCustomProfile(int $VariableID, string $ProfileName)
 {
     IPS\VariableManager::setVariableCustomProfile($VariableID, $ProfileName);
+    return true;
 }
 
 function IPS_SetVariableCustomPresentation(int $VariableID, array $Presentation)
 {
     IPS\VariableManager::setVariableCustomPresentation($VariableID, $Presentation);
+    return true;
 }
 
 /* Script Manager */
 function IPS_CreateScript(int $ScriptType)
 {
+    IPS\ScriptManager::checkScriptTypeRange($ScriptType);
     $id = IPS\ObjectManager::registerObject(3 /* Script */);
     IPS\ScriptManager::createScript($id, $ScriptType);
 
@@ -639,8 +660,10 @@ function IPS_CreateScript(int $ScriptType)
 
 function IPS_DeleteScript(int $ScriptID, bool $DeleteFile)
 {
+    IPS\ObjectManager::checkNoChildren($ScriptID, 'script');
     IPS\ScriptManager::deleteScript($ScriptID, $DeleteFile);
     IPS\ObjectManager::unregisterObject($ScriptID);
+    return true;
 }
 
 function IPS_ScriptExists(int $ScriptID)
@@ -651,11 +674,13 @@ function IPS_ScriptExists(int $ScriptID)
 function IPS_SetScriptContent(int $ScriptID, string $Content)
 {
     IPS\ScriptManager::setScriptContent($ScriptID, $Content);
+    return true;
 }
 
 function IPS_SetScriptFile(int $ScriptID, string $FilePath)
 {
     IPS\ScriptManager::setScriptFile($ScriptID, $FilePath);
+    return true;
 }
 
 function IPS_GetScript(int $ScriptID)
@@ -675,7 +700,7 @@ function IPS_GetScriptEventList(int $ScriptID)
 
 function IPS_GetScriptFile(int $ScriptID)
 {
-    IPS\ScriptManager::getScriptFile($ScriptID);
+    return IPS\ScriptManager::getScriptFile($ScriptID);
 }
 
 function IPS_GetScriptIDByFile(string $FilePath)
@@ -861,6 +886,7 @@ function IPS_SetScriptTimer(int $ScriptID, int $Interval)
 /* Media Manager */
 function IPS_CreateMedia(int $MediaType)
 {
+    IPS\MediaManager::checkMediaTypeRange($MediaType);
     $id = IPS\ObjectManager::registerObject(5 /* Media */);
     IPS\MediaManager::createMedia($id, $MediaType);
     return $id;
@@ -868,8 +894,10 @@ function IPS_CreateMedia(int $MediaType)
 
 function IPS_DeleteMedia(int $MediaID, bool $DeleteFile)
 {
+    IPS\ObjectManager::checkNoChildren($MediaID, 'media');
     IPS\MediaManager::deleteMedia($MediaID, $DeleteFile);
     IPS\ObjectManager::unregisterObject($MediaID);
+    return true;
 }
 
 function IPS_MediaExists(int $MediaID)
@@ -879,46 +907,49 @@ function IPS_MediaExists(int $MediaID)
 
 function IPS_GetMedia(int $MediaID)
 {
-    return [];
+    return IPS\MediaManager::getMedia($MediaID);
 }
 
 function IPS_GetMediaContent(int $MediaID)
 {
-    return '';
+    return IPS\MediaManager::getMediaContent($MediaID);
 }
 
 function IPS_GetMediaIDByFile(string $FilePath)
 {
-    return 0;
+    return IPS\MediaManager::getMediaIDByFile($FilePath);
 }
 
 function IPS_GetMediaIDByName(string $Name, int $ParentID)
 {
-    return 0;
+    return IPS\ObjectManager::getObjectIDByNameEx($Name, $ParentID, 5 /* Media */);
 }
 
 function IPS_GetMediaList()
 {
-    return [];
+    return IPS\MediaManager::getMediaList();
 }
 
 function IPS_GetMediaListByType(int $MediaType)
 {
-    return [];
+    return IPS\MediaManager::getMediaListByType($MediaType);
 }
 
 function IPS_SetMediaCached(int $MediaID, bool $Cached)
 {
+    IPS\MediaManager::setMediaCached($MediaID, $Cached);
     return true;
 }
 
 function IPS_SetMediaContent(int $MediaID, string $Content)
 {
+    IPS\MediaManager::setMediaContent($MediaID, $Content);
     return true;
 }
 
 function IPS_SetMediaFile(int $MediaID, string $FilePath, bool $FileMustExists)
 {
+    IPS\MediaManager::setMediaFile($MediaID, $FilePath, $FileMustExists);
     return true;
 }
 
@@ -937,8 +968,10 @@ function IPS_CreateLink()
 
 function IPS_DeleteLink(int $LinkID)
 {
+    IPS\ObjectManager::checkNoChildren($LinkID, 'link');
     IPS\LinkManager::deleteLink($LinkID);
     IPS\ObjectManager::unregisterObject($LinkID);
+    return true;
 }
 
 function IPS_LinkExists(int $LinkID)
@@ -964,17 +997,20 @@ function IPS_GetLinkList()
 function IPS_SetLinkTargetID(int $LinkID, int $ChildID)
 {
     IPS\LinkManager::setLinkTargetID($LinkID, $ChildID);
+    return true;
 }
 
 /* Profile Manager */
 function IPS_CreateVariableProfile(string $ProfileName, int $ProfileType)
 {
     IPS\ProfileManager::createVariableProfile($ProfileName, $ProfileType);
+    return true;
 }
 
 function IPS_DeleteVariableProfile(string $ProfileName)
 {
     IPS\ProfileManager::deleteVariableProfile($ProfileName);
+    return true;
 }
 
 function IPS_VariableProfileExists(string $ProfileName)
@@ -1000,26 +1036,31 @@ function IPS_GetVariableProfileListByType(int $ProfileType)
 function IPS_SetVariableProfileAssociation(string $ProfileName, $AssociationValue, string $AssociationName, string $AssociationIcon, int $AssociationColor)
 {
     IPS\ProfileManager::setVariableProfileAssociation($ProfileName, $AssociationValue, $AssociationName, $AssociationIcon, $AssociationColor);
+    return true;
 }
 
 function IPS_SetVariableProfileDigits(string $ProfileName, int $Digits)
 {
     IPS\ProfileManager::setVariableProfileDigits($ProfileName, $Digits);
+    return true;
 }
 
 function IPS_SetVariableProfileIcon(string $ProfileName, string $Icon)
 {
     IPS\ProfileManager::setVariableProfileIcon($ProfileName, $Icon);
+    return true;
 }
 
 function IPS_SetVariableProfileText(string $ProfileName, string $Prefix, string $Suffix)
 {
     IPS\ProfileManager::setVariableProfileText($ProfileName, $Prefix, $Suffix);
+    return true;
 }
 
 function IPS_SetVariableProfileValues(string $ProfileName, float $MinValue, float $MaxValue, float $StepSize)
 {
     IPS\ProfileManager::setVariableProfileValues($ProfileName, $MinValue, $MaxValue, $StepSize);
+    return true;
 }
 
 /* Kernel */
@@ -1177,7 +1218,7 @@ function IPS_RunScriptTextEx(string $ScriptText, array $Parameters)
 
 function IPS_RunScriptTextWait(string $ScriptText)
 {
-    return IPS\ScriptEngine::IPS_RunScriptTextWait($ScriptText);
+    return IPS\ScriptEngine::runScriptTextWait($ScriptText);
 }
 
 function IPS_RunScriptTextWaitEx(string $ScriptText, array $Parameters)
@@ -1296,7 +1337,8 @@ function IPS_ModuleExists(string $ModuleID)
 
 function IPS_GetModule(string $ModuleID)
 {
-    return IPS\ModuleLoader::getModule($ModuleID);
+    //The class name is only used internally by the stubs
+    return array_diff_key(IPS\ModuleLoader::getModule($ModuleID), ['Class' => true]);
 }
 
 function IPS_GetModuleList()
@@ -1399,7 +1441,7 @@ function IPS_GetPresentation(string $GUID)
 
 function IPS_UpdateFormField(string $Name, string $Parameter, $Value, string $SessionID)
 {
-    return IPS\ActionPool::updateFormField($Name, $Parameter, $Value, $SessionID);
+    return IPS\ActionPool::updateFormField($Name, $Parameter, $Value, 0, $SessionID);
 }
 
 function IPS_PresentationExists(string $GUID)
@@ -1496,6 +1538,7 @@ function IPS_ExecuteEx(string $Filename, string $Parameter, bool $ShowWindow, bo
 function IPS_Sleep(int $Milliseconds)
 {
     usleep($Milliseconds * 1000);
+    return true;
 }
 
 /* System Information */
